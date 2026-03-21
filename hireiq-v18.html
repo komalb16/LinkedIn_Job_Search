@@ -2972,7 +2972,7 @@ const BANK=[
 {cat:'DSA',diff:'Medium',company:'Google',q:'3Sum — all unique triplets summing to zero.',a:'Sort, fix i, two pointers l/r. Skip duplicates at each level. O(n^2).'},
 {cat:'DSA',diff:'Medium',company:'Facebook',q:'Longest Substring Without Repeating Characters.',a:'Sliding window + hashmap. Expand right, shrink left on duplicate. O(n).'},
 {cat:'DSA',diff:'Medium',company:'Uber',q:'Meeting Rooms II — minimum rooms needed.',a:'Sort by start. Min-heap of end times. If start>=heap.top, reuse room (pop). Push end time. O(n log n).'},
-{cat:'DSA',diff:'Medium',company:'LinkedIn',q:'Course Schedule — detect cycle in directed graph.',a:"DFS with 3 states (unvisited/visiting/done). Cycle if you hit visiting. Or Kahn's BFS topological sort."},
+{cat:'DSA',diff:'Medium',company:'LinkedIn',q:'Course Schedule — detect cycle in directed graph.',a:"DFS with 3 states (unvisited/visiting/done). Cycle if you hit visiting. Or Kahn\'s BFS topological sort."},
 {cat:'DSA',diff:'Medium',company:'Airbnb',q:'Number of Islands.',a:'BFS/DFS from unvisited 1s, mark all connected. O(M×N).'},
 {cat:'DSA',diff:'Medium',company:'Stripe',q:'Coin Change — minimum coins for amount.',a:'DP: dp[i]=min(dp[i],dp[i-coin]+1). O(amount×coins). Unbounded knapsack.'},
 {cat:'DSA',diff:'Medium',company:'Blind 75',q:'Product of Array Except Self — no division O(1) extra.',a:'Left pass for prefix products, right pass multiplies by suffix using running var. O(n).'},
@@ -3005,7 +3005,7 @@ const BANK=[
 {cat:'DSA',diff:'Hard',company:'Two Sigma',q:'Edit Distance (Levenshtein).',a:'2D DP: dp[i][j]=min edits to convert s1[0..i] to s2[0..j]. Insert/delete/replace=dp±1. O(m×n).'},
 {cat:'DSA',diff:'Hard',company:'Jane Street',q:'Sliding Window Maximum.',a:'Monotonic deque. Maintain decreasing queue of indices. Front is always max. Remove expired. O(n).'},
 {cat:'DSA',diff:'Hard',company:'Citadel',q:'Burst Balloons — max coins.',a:'Interval DP. dp[l][r]=max coins bursting all in (l,r). Try each k as last to burst. O(n^3).'},
-{cat:'DSA',diff:'Hard',company:'DE Shaw',q:'Alien Dictionary — topological sort.',a:'Build directed graph from adjacent word char diffs. Kahn's BFS for topological order. Detect cycles for invalid input.'},
+{cat:'DSA',diff:'Hard',company:'DE Shaw',q:'Alien Dictionary — topological sort.',a:'Build directed graph from adjacent word char diffs. Kahn\'s BFS for topological order. Detect cycles for invalid input.'},
 // ─── System Design — Easy ──────────────────────────────────────────────────────
 {cat:'System Design',diff:'Easy',company:'General',q:'Explain CAP theorem and when you use CP vs AP.',a:'CP (ZooKeeper): consistency over availability. AP (Cassandra): availability over consistency. CA=single node only. Banking=CP, social feed=AP.'},
 {cat:'System Design',diff:'Easy',company:'General',q:'SQL vs NoSQL — how do you choose?',a:'SQL: ACID, relations, complex queries, known schema. NoSQL: flexible schema, horizontal scale, high write throughput. Choose based on access patterns.'},
