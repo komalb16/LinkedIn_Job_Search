@@ -183,7 +183,7 @@ nav{display:flex;padding:0 1.5rem;background:var(--surface);border-bottom:1px so
 /* ═══════════════════════════════════════════
    MAIN
 ═══════════════════════════════════════════ */
-main{position:relative;z-index:1;padding:1.75rem 2rem;width:100%;}
+main{position:relative;z-index:1;padding:1.75rem 2.5rem;width:100%;}
 .panel{display:none;animation:fadeUp .28s ease;}
 .panel.on{display:block;}
 
@@ -241,7 +241,7 @@ textarea.ta::placeholder{color:var(--text3);}
 /* ── Empty states ──────────────────────────────── */
 .empty{text-align:center;padding:3.5rem 2rem;color:var(--text2);}
 .empty .ei{font-size:2.8rem;margin-bottom:1rem;}
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 1.5rem;text-align:center;gap:.5rem;}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;text-align:center;gap:.5rem;width:100%;}
 .empty-state .es-icon{font-size:3rem;margin-bottom:.5rem;filter:grayscale(30%);}
 .empty-state .es-title{font-family:var(--font-d);font-weight:700;font-size:.98rem;color:var(--text);margin-bottom:.2rem;}
 .empty-state .es-desc{font-size:.83rem;color:var(--text3);line-height:1.6;max-width:280px;}
@@ -277,7 +277,7 @@ textarea.ta::placeholder{color:var(--text3);}
 .greet strong{color:var(--accent);font-weight:700;font-size:1rem;text-transform:none;}
 .hero h1{font-family:var(--font-d);font-size:clamp(1.8rem,3vw,3.2rem);font-weight:800;line-height:1.1;letter-spacing:-.04em;margin-bottom:1.1rem;}
 .hero h1 em{font-style:normal;color:var(--accent);}
-.hero>p{color:var(--text3);font-size:.88rem;margin-bottom:2rem;line-height:1.7;max-width:580px;}
+.hero>p{color:var(--text3);font-size:.87rem;margin-bottom:2rem;line-height:1.6;max-width:640px;letter-spacing:.01em;}
 .sbox{display:flex;gap:.55rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:.65rem;max-width:880px;margin:0 auto;box-shadow:var(--shadow);}
 .sbox input{flex:1;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-family:var(--font-b);font-size:.86rem;transition:border-color var(--ease);}
 .sbox input:focus{outline:none;border-color:var(--accent);}
@@ -906,10 +906,10 @@ textarea.ta::placeholder{color:var(--text3);}
   .search-layout{grid-template-columns:1fr 400px;gap:3rem;}
   .hero h1{font-size:clamp(2.6rem,3vw,4rem);}
 }
-@media(min-width:1440px){main{padding:2rem 4rem;}}
-@media(min-width:1600px){main{padding:2rem 6rem;}}
-.ss-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;}
-.ss-card-title{font-family:var(--font-d);font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:.85rem;}
+@media(min-width:1440px){main{padding:2.5rem 5rem;}}
+@media(min-width:1600px){main{padding:2.5rem 7rem;}}
+.ss-card{background:var(--surface);border:1px solid rgba(255,255,255,0.09);border-radius:var(--radius);padding:1.25rem 1.4rem;}
+.ss-card-title{font-family:var(--font-d);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
 .ss-feature{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all var(--ease);}
 .ss-feature:last-child{border-bottom:none;padding-bottom:0;}
 .ss-feature:hover .ss-ft{color:var(--accent);}
@@ -1062,7 +1062,7 @@ textarea.ta::placeholder{color:var(--text3);}
       <div class="hero">
         <div class="greet">Welcome back, <strong id="greetN">there</strong> 👋</div>
         <h1>Stop applying blindly.<br><em>Start landing interviews.</em></h1>
-        <p>AI that tailors your resume, checks ATS keywords, coaches you through interviews, and helps you negotiate — all free.</p>
+        <p>Resume tailoring · ATS keywords · Mock interviews · Offer negotiation — all free.</p>
         <div class="sbox">
           <div class="ac-wrap"><input id="sTitle" placeholder="Job title (e.g. ML Engineer)" autocomplete="off" oninput="acInput(this,'title')" onkeydown="acKey(event,'title')" onfocus="acInput(this,'title')" onblur="acBlur('title')" /><div class="ac-drop" id="ac-title"></div></div>
           <div class="ac-wrap"><input id="sLoc"   placeholder="Location (e.g. Austin, TX)"  autocomplete="off" oninput="acInput(this,'loc')"   onkeydown="acKey(event,'loc')"   onfocus="acInput(this,'loc')"   onblur="acBlur('loc')"   /><div class="ac-drop" id="ac-loc"></div></div>
