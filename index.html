@@ -390,6 +390,28 @@ textarea.ta::placeholder{color:var(--text3);}
 .rs-stats{display:flex;gap:1rem;margin-top:.6rem;font-size:.76rem;flex-wrap:wrap;}
 .rs-stats span{color:var(--text2);}
 .rs-stats .ok{color:var(--accent);}
+.resume-card-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1.5rem;text-align:center;border:1.5px dashed var(--border);border-radius:var(--radius);min-height:200px;gap:.4rem;}
+.rc-empty-ico{font-size:2.2rem;margin-bottom:.25rem;opacity:.5;}
+.rc-empty-title{font-family:var(--font-d);font-weight:700;font-size:.88rem;color:var(--text2);}
+.rc-empty-sub{font-size:.76rem;color:var(--text3);line-height:1.55;max-width:220px;}
+.resume-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.rc-header{background:linear-gradient(135deg,rgba(14,164,122,.1),rgba(108,92,231,.07));padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.85rem;}
+.rc-file-ico{width:38px;height:46px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;position:relative;}
+.rc-file-ico::after{content:'PDF';position:absolute;bottom:-1px;left:0;right:0;background:#e74c3c;color:#fff;font-size:.45rem;font-weight:800;text-align:center;border-radius:0 0 3px 3px;padding:1px 0;font-family:var(--font-d);letter-spacing:.5px;}
+.rc-file-ico.docx::after{content:'DOC';background:#2980b9;}
+.rc-file-ico.txt::after{content:'TXT';background:#27ae60;}
+.rc-name{font-family:var(--font-d);font-weight:700;font-size:.92rem;color:var(--text);margin-bottom:.15rem;}
+.rc-meta{font-size:.72rem;color:var(--text3);}
+.rc-summary{padding:.85rem 1.25rem;font-size:.78rem;color:var(--text2);line-height:1.65;max-height:120px;overflow:hidden;position:relative;}
+.rc-summary::after{content:'';position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(transparent,var(--surface));}
+.rc-actions{padding:.65rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:.5rem;flex-wrap:wrap;}
+.rlib-item{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.45rem;cursor:pointer;transition:all var(--ease);}
+.rlib-item:hover{border-color:var(--accent);}
+.rlib-item.active{border-color:var(--accent);background:rgba(14,164,122,.06);}
+.rlib-ico{width:28px;height:28px;border-radius:5px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+.rlib-name{font-size:.8rem;font-weight:600;color:var(--text);font-family:var(--font-d);flex:1;}
+.rlib-meta{font-size:.69rem;color:var(--text3);}
+.rlib-badge{font-size:.63rem;background:rgba(14,164,122,.15);color:var(--accent);padding:1px 7px;border-radius:10px;font-weight:700;flex-shrink:0;}
 .build-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-top:2rem;}
 .build-box h3{font-family:var(--font-d);font-weight:700;font-size:.95rem;margin-bottom:1rem;}
 .bg2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
@@ -575,6 +597,7 @@ textarea.ta::placeholder{color:var(--text3);}
 
 /* CL output formatting */
 .cl-output{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem;font-size:.84rem;line-height:1.85;white-space:pre-wrap;color:var(--text);max-height:500px;overflow-y:auto;}
+.err-box{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius-sm);padding:1rem 1.25rem;font-size:.84rem;color:#fca5a5;line-height:1.7;}
 
 /* Modal tab switcher */
 .modal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;gap:0;}
@@ -1131,25 +1154,10 @@ textarea.ta::placeholder{color:var(--text3);}
     <!-- RIGHT: sidebar — only visible on wide screens -->
     <div class="search-sidebar" id="searchSidebar">
 
-      <!-- Quick actions -->
-      <div class="ss-card">
+      <!-- Quick actions — dynamic, updates based on completion -->
+      <div class="ss-card" id="qaCard">
         <div class="ss-card-title">Quick actions</div>
-        <div class="ss-feature" onclick="sw('resume',document.querySelector('[onclick*=resume]'))">
-          <div class="ss-fi">📄</div>
-          <div><div class="ss-ft">Upload your resume</div><div class="ss-fs">Enables AI match scoring on every job</div></div>
-        </div>
-        <div class="ss-feature" onclick="sw('alerts',document.querySelector('[onclick*=alerts]'))">
-          <div class="ss-fi">🔔</div>
-          <div><div class="ss-ft">Create a job alert</div><div class="ss-fs">Get notified when new roles match your search</div></div>
-        </div>
-        <div class="ss-feature" onclick="sw('mock',document.querySelector('[onclick*=mock]'))">
-          <div class="ss-fi">🎤</div>
-          <div><div class="ss-ft">Practice interviews</div><div class="ss-fs">AI mock interviewer with scored feedback</div></div>
-        </div>
-        <div class="ss-feature" onclick="sw('salary',document.querySelector('[onclick*=salary]'))">
-          <div class="ss-fi">💰</div>
-          <div><div class="ss-ft">Estimate a salary</div><div class="ss-fs">Paste any JD to get low/mid/high band</div></div>
-        </div>
+        <div id="qaList"></div>
       </div>
 
       <!-- Your stats -->
@@ -1264,9 +1272,22 @@ textarea.ta::placeholder{color:var(--text3);}
       <button class="btn btn-p" style="margin-top:.7rem;width:100%" onclick="saveResume()">💾 Save Resume</button>
     </div>
     <div>
-      <div class="pl">Saved Preview</div>
-      <div class="ai-box dim" id="resumePrev" style="min-height:260px">No resume saved yet.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem">
+        <div class="pl" style="margin:0">Saved Resumes</div>
+        <button class="btn btn-tl btn-sm" id="saveNewResumeBtn" onclick="saveResumeAsNew()" style="font-size:.72rem;padding:4px 10px">+ Save as new</button>
+      </div>
+      <!-- Active resume card -->
+      <div id="resumeCard" class="resume-card-empty">
+        <div class="rc-empty-ico">📄</div>
+        <div class="rc-empty-title">No resume saved yet</div>
+        <div class="rc-empty-sub">Upload a file or paste text, then click Save Resume</div>
+      </div>
       <div class="rs-stats" id="rsStats"></div>
+      <!-- Resume library -->
+      <div id="resumeLibrary" style="margin-top:.85rem;display:none">
+        <div style="font-family:var(--font-d);font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:.6rem">Saved resumes</div>
+        <div id="resumeLibList"></div>
+      </div>
     </div>
   </div>
   <div class="build-box">
@@ -1940,6 +1961,10 @@ textarea.ta::placeholder{color:var(--text3);}
           <a href="https://console.groq.com" target="_blank" style="font-size:.7rem;color:var(--accent);text-decoration:none">Get free →</a>
         </label>
         <input type="password" id="s-gkey" placeholder="gsk_..." />
+        <div style="display:flex;align-items:center;gap:.6rem;margin-top:.4rem">
+          <button class="btn btn-o btn-sm" onclick="testGroqKey()" style="font-size:.73rem;padding:4px 12px">🔌 Test connection</button>
+          <span id="groqKeyStatus" style="font-size:.73rem;color:var(--text3)"></span>
+        </div>
         <small>All AI features: resume builder, cover letters, mock interviews, salary estimator</small>
       </div>
       <div class="fg" style="margin-bottom:0">
@@ -1948,6 +1973,10 @@ textarea.ta::placeholder{color:var(--text3);}
           <a href="https://rapidapi.com/letscrape-6M/api/jsearch" target="_blank" style="font-size:.7rem;color:var(--accent2);text-decoration:none">Get free →</a>
         </label>
         <input type="password" id="s-rkey" placeholder="Your RapidAPI key..." />
+        <div style="display:flex;align-items:center;gap:.6rem;margin-top:.4rem">
+          <button class="btn btn-o btn-sm" onclick="testRapidKey()" style="font-size:.73rem;padding:4px 12px">🔌 Test connection</button>
+          <span id="rapidKeyStatus" style="font-size:.73rem;color:var(--text3)"></span>
+        </div>
         <small>Live job search — JSearch free plan (200 req/month)</small>
       </div>
     </div>
@@ -2017,6 +2046,7 @@ let S = {
   linkedin: localStorage.getItem('hiq_linkedin')||'',
   theme:    localStorage.getItem('hiq_theme')||'dark',
   resume:   localStorage.getItem('hiq_resume')||'',
+  resumes:  JSON.parse(localStorage.getItem('hiq_resumes')||'[]'),
   apps:     JSON.parse(localStorage.getItem('hiq_apps')||'[]'),
   alerts:   JSON.parse(localStorage.getItem('hiq_alerts')||'[]'),
   notifs:   JSON.parse(localStorage.getItem('hiq_notifs')||'[]'),
@@ -2087,7 +2117,58 @@ function applyState(){
   updateSidebarStats();
 }
 
+function renderQuickActions(){
+  const list=document.getElementById('qaList');
+  if(!list) return;
+  const hasResume  = !!S.resume;
+  const alertCount = S.alerts.length;
+  const appCount   = S.apps.length;
+  const revCount   = JSON.parse(localStorage.getItem('hiq_reviewed')||'[]').length;
+
+  const actions=[
+    {
+      done: hasResume,
+      ico:  hasResume?'✅':'📄',
+      ft:   hasResume?'Resume saved':'Upload your resume',
+      fs:   hasResume?`${S.resume.split(/\s+/).filter(Boolean).length} words · AI match scoring on`:'Enables AI match scoring on every job',
+      tab:  'resume'
+    },
+    {
+      done: alertCount>0,
+      ico:  alertCount>0?'✅':'🔔',
+      ft:   alertCount>0?`${alertCount} alert${alertCount>1?'s':''} active`:'Create a job alert',
+      fs:   alertCount>0?'Monitoring jobs on your schedule':'Get notified when new roles match your search',
+      tab:  'alerts'
+    },
+    {
+      done: appCount>0,
+      ico:  appCount>0?'✅':'📋',
+      ft:   appCount>0?`${appCount} application${appCount>1?'s':''} tracked`:'Track your applications',
+      fs:   appCount>0?'Kanban board updated':'Add jobs to your tracker as you apply',
+      tab:  'tracker'
+    },
+    {
+      done: revCount>0,
+      ico:  revCount>0?'✅':'🎤',
+      ft:   revCount>0?`${revCount}/145 questions reviewed`:'Practice interviews',
+      fs:   revCount>0?'Keep going — study mode available':'AI mock interviewer with scored feedback',
+      tab:  revCount>0?'bank':'mock'
+    },
+  ];
+
+  list.innerHTML=actions.map(a=>`
+    <div class="ss-feature${a.done?' ss-done':''}" onclick="sw('${a.tab}',document.querySelector('[onclick*=${a.tab}]'))">
+      <div class="ss-fi" style="${a.done?'background:rgba(14,164,122,.12);font-size:.9rem':''}">${a.ico}</div>
+      <div style="flex:1;min-width:0">
+        <div class="ss-ft" style="${a.done?'color:var(--text2)':''}">${a.ft}</div>
+        <div class="ss-fs">${a.fs}</div>
+      </div>
+      ${a.done?'':`<div style="color:var(--text3);font-size:.7rem">→</div>`}
+    </div>`).join('');
+}
+
 function updateSidebarStats(){
+  renderQuickActions();
   const apps    = document.getElementById('ss-apps');
   const alerts  = document.getElementById('ss-alerts');
   const resume  = document.getElementById('ss-resume');
@@ -2267,6 +2348,49 @@ function openSettings(){
   const fsEl = document.getElementById('s-fontsize');
   if(fsEl) fsEl.value = localStorage.getItem('hiq_fontsize')||'md';
   openMod('sMod');
+}
+async function testGroqKey(){
+  const key=(document.getElementById('s-gkey').value||S.gkey).trim();
+  const el=document.getElementById('groqKeyStatus');
+  if(!key){ if(el) el.textContent='Enter a key first'; return; }
+  if(el){ el.textContent='Testing…'; el.style.color='var(--text3)'; }
+  try{
+    const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1,messages:[{role:'user',content:'hi'}]})
+    });
+    const d=await r.json();
+    if(r.status===200||r.status===429){
+      if(el){ el.textContent='✅ Valid key'; el.style.color='var(--accent)'; }
+      toast('✅ Groq key is valid');
+    } else {
+      if(el){ el.textContent='❌ Invalid key — check console.groq.com'; el.style.color='#f87171'; }
+      toast('❌ Invalid Groq key');
+    }
+  } catch(e){
+    if(el){ el.textContent='⚠️ Network error — try again'; el.style.color='var(--text3)'; }
+  }
+}
+async function testRapidKey(){
+  const key=(document.getElementById('s-rkey').value||S.rkey).trim();
+  const el=document.getElementById('rapidKeyStatus');
+  if(!key){ if(el) el.textContent='Enter a key first'; return; }
+  if(el){ el.textContent='Testing…'; el.style.color='var(--text3)'; }
+  try{
+    const r=await fetch('https://jsearch.p.rapidapi.com/search?query=test&num_pages=1',{
+      headers:{'X-RapidAPI-Key':key,'X-RapidAPI-Host':'jsearch.p.rapidapi.com'}
+    });
+    if(r.status===200||r.status===429){
+      if(el){ el.textContent='✅ Valid key'; el.style.color='var(--accent)'; }
+      toast('✅ RapidAPI key is valid');
+    } else {
+      if(el){ el.textContent='❌ Invalid key — check rapidapi.com'; el.style.color='#f87171'; }
+      toast('❌ Invalid RapidAPI key');
+    }
+  } catch(e){
+    if(el){ el.textContent='⚠️ Network error — try again'; el.style.color='var(--text3)'; }
+  }
 }
 function saveSettings(){
   S.name =document.getElementById('s-name').value.trim();
@@ -3057,6 +3181,7 @@ async function handleFile(input){
   }
   // Unsupported format check
   const ext = f.name.split('.').pop().toLowerCase();
+  window._lastResumeExt = ext;
   if(!['pdf','docx','txt','text'].includes(ext)){
     toast('⚠️ Unsupported format. Please use .pdf, .docx, or .txt');
     return;
@@ -3126,25 +3251,132 @@ function livePreview(){
 function saveResume(){
   const v=document.getElementById('resumeTA').value.trim();
   if(!v){ toast('Nothing to save'); return; }
-  S.resume=v;
-  try{
-    localStorage.setItem('hiq_resume',v);
-  } catch(e){
-    // QuotaExceededError — storage full
-    toast('⚠️ Storage full — clear some data in Settings and try again');
-    return;
+  // If resumes exist, ask if overwrite active or save as new
+  if(S.resumes && S.resumes.length>0 && S.resume){
+    const name=prompt('Save as (give this resume a name):', guessResumeName(v));
+    if(name===null) return; // cancelled
+    saveResumeToLibrary(v, name.trim()||'My Resume', true);
+  } else {
+    const name=prompt('Name this resume:', guessResumeName(v));
+    if(name===null) return;
+    saveResumeToLibrary(v, name.trim()||'My Resume', true);
   }
-  const pv=document.getElementById('resumePrev');
-  if(pv){ pv.textContent=v; pv.classList.remove('dim'); }
-  try{ showRStats(v); } catch(e){}
+}
+function saveResumeAsNew(){
+  const v=document.getElementById('resumeTA').value.trim();
+  if(!v){ toast('Paste or upload a resume first'); return; }
+  const name=prompt('Name for this resume:', guessResumeName(v));
+  if(name===null) return;
+  saveResumeToLibrary(v, name.trim()||'Resume '+(S.resumes.length+1), false);
+}
+function guessResumeName(txt){
+  // Try to pull name/role from top of resume
+  const lines=txt.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  for(const l of lines.slice(0,5)){
+    if(l.length>3 && l.length<60 && !/^[0-9+()@.]/.test(l)) return l;
+  }
+  return 'My Resume';
+}
+function saveResumeToLibrary(txt, name, makeActive){
+  if(!S.resumes) S.resumes=[];
+  // Check if name already exists — update it
+  const existing=S.resumes.findIndex(r=>r.name===name);
+  const entry={ id: Date.now(), name, text:txt, savedAt:new Date().toISOString(), ext:window._lastResumeExt||'txt' };
+  if(existing>=0) S.resumes[existing]=entry;
+  else S.resumes.push(entry);
+  if(makeActive || !S.resume){
+    S.resume=txt;
+    try{ localStorage.setItem('hiq_resume',txt); }
+    catch(e){ toast('⚠️ Storage full — clear some data in Settings'); return; }
+  }
+  try{ localStorage.setItem('hiq_resumes', JSON.stringify(S.resumes)); }
+  catch(e){ console.warn('Could not save resume library'); }
+  try{ showRStats(txt); } catch(e){}
   updateSidebarStats();
-  toast('Resume saved ✅');
+  renderResumeLibrary();
+  toast(makeActive?`"${name}" saved and set as active ✅`:`"${name}" added to library ✅`);
+}
+function setActiveResume(idx){
+  const r=S.resumes[idx]; if(!r) return;
+  S.resume=r.text;
+  window._lastResumeExt=r.ext||'txt';
+  try{ localStorage.setItem('hiq_resume',r.text); }catch(e){}
+  document.getElementById('resumeTA').value=r.text;
+  try{ showRStats(r.text); }catch(e){}
+  renderResumeLibrary();
+  toast(`"${r.name}" set as active resume ✅`);
+}
+function deleteResumeFromLibrary(idx){
+  const r=S.resumes[idx]; if(!r) return;
+  if(!confirm(`Delete "${r.name}"?`)) return;
+  S.resumes.splice(idx,1);
+  if(S.resume===r.text && S.resumes.length>0){
+    S.resume=S.resumes[0].text;
+    localStorage.setItem('hiq_resume',S.resume);
+  } else if(S.resumes.length===0){
+    S.resume='';
+    localStorage.setItem('hiq_resume','');
+  }
+  localStorage.setItem('hiq_resumes',JSON.stringify(S.resumes));
+  renderResumeLibrary();
+  try{ if(S.resume) showRStats(S.resume); }catch(e){}
+  updateSidebarStats();
+  toast(`"${r.name}" deleted`);
+}
+function renderResumeLibrary(){
+  const lib=document.getElementById('resumeLibrary');
+  const list=document.getElementById('resumeLibList');
+  if(!lib||!list) return;
+  if(!S.resumes||S.resumes.length===0){ lib.style.display='none'; return; }
+  lib.style.display='block';
+  list.innerHTML=S.resumes.map((r,i)=>{
+    const isActive=r.text===S.resume;
+    const wc=r.text.split(/\s+/).filter(Boolean).length;
+    return `<div class="rlib-item${isActive?' active':''}" onclick="setActiveResume(${i})">
+      <div class="rlib-ico">${r.ext==='pdf'?'📕':r.ext==='docx'?'📘':'📄'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="rlib-name">${escHtml(r.name)}</div>
+        <div class="rlib-meta">${wc} words · ${new Date(r.savedAt).toLocaleDateString()}</div>
+      </div>
+      ${isActive?'<span class="rlib-badge">Active</span>':'<span style="font-size:.7rem;color:var(--text3)">Use</span>'}
+      <button class="btn btn-o btn-sm" style="padding:2px 7px;font-size:.68rem;margin-left:4px" onclick="event.stopPropagation();deleteResumeFromLibrary(${i})">🗑</button>
+    </div>`;
+  }).join('');
 }
 function showRStats(t){
   const el=document.getElementById('rsStats');
   if(!el) return;
   const wc=t.split(/\s+/).filter(Boolean).length;
   el.innerHTML=`<span>📝 ${wc} words</span><span>📏 ${t.length} chars</span><span class="ok">✅ AI-ready</span>`;
+  renderResumeCard(t);
+}
+function renderResumeCard(t){
+  const card=document.getElementById('resumeCard');
+  if(!card) return;
+  const wc=t.split(/\s+/).filter(Boolean).length;
+  // Detect file type from name if available, else guess from content
+  const ext = (window._lastResumeExt||'txt');
+  const icoClass = ext==='pdf'?'pdf':ext==='docx'?'docx':'txt';
+  // Extract name from top of resume (first line likely has it)
+  const firstLine = t.split(/\n/)[0].trim().slice(0,60);
+  // Get first meaningful paragraph for preview
+  const preview = t.slice(0,400).replace(/\n+/g,' ').trim();
+  card.className='resume-card';
+  card.innerHTML=`
+    <div class="rc-header">
+      <div class="rc-file-ico ${icoClass}">📄</div>
+      <div style="flex:1;min-width:0">
+        <div class="rc-name">${escHtml(firstLine)||S.name||'Resume'}</div>
+        <div class="rc-meta">${wc} words · ${Math.round(t.length/1024*10)/10}KB · Saved</div>
+      </div>
+      <div style="color:var(--accent);font-size:.75rem;font-weight:700">✅ Ready</div>
+    </div>
+    <div class="rc-summary">${escHtml(preview)}...</div>
+    <div class="rc-actions">
+      <button class="btn btn-o btn-sm" onclick="document.getElementById('resumeTA').value=S.resume;sw('resume',document.querySelector('[onclick*=resume]'))">✏️ Edit</button>
+      <button class="btn btn-tl btn-sm" onclick="dlTxt(S.resume,'resume')">💾 Download .txt</button>
+      <button class="btn btn-o btn-sm" onclick="navigator.clipboard.writeText(S.resume).then(()=>toast('Copied ✅'))">📋 Copy</button>
+    </div>`;
 }
 async function buildResume(){
   if(!S.gkey){ toast('Add Groq API key in settings'); return; }
@@ -3555,7 +3787,13 @@ window.sw=function(name,el){
   _origSw(name,el);
   if(name==='tracker'){ setTimeout(()=>{ renderTracker(); initTouchDrag(); },60); }
   // Lazy-populate resume preview only when tab is opened
-  if(name==='resume' && S.resume){
+  if(name==='resume'){
+    try{ renderResumeLibrary(); }catch(e){}
+  }
+  // Clear stale error messages when switching to cover letter tab
+  if(name==='coverletter'){
+    const out=document.getElementById('cl-out');
+    if(out && out.querySelector('.err-box')) out.innerHTML='';
     const pv=document.getElementById('resumePrev');
     if(pv && pv.classList.contains('dim')){
       pv.textContent=S.resume;
@@ -4045,7 +4283,10 @@ function setTone(el, tone, rowId){
 }
 
 async function genCoverLetter(resumeId, jdId, outId, variant){
-  if(!S.gkey){ toast('Add Groq API key in settings'); return; }
+  if(!S.gkey){
+    document.getElementById(outId).innerHTML=`<div class="err-box">⚠️ No Groq API key — click your avatar → Settings → paste your free key from <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a></div>`;
+    return;
+  }
   const resume=document.getElementById(resumeId)?.value.trim()||S.resume;
   const jd=document.getElementById(jdId)?.value.trim();
   const name=document.getElementById('cl-name')?.value.trim()||S.name||'[Your Name]';
@@ -4087,6 +4328,15 @@ Start directly with "${salutation}" and end with the signature block "Sincerely,
 Output only the complete letter:`;
 
   const res=await groq(prompt,1400);
+  // Handle API errors gracefully
+  if(res.startsWith('Error:')){
+    out.innerHTML=`<div class="err-box">
+      <strong>⚠️ ${escHtml(res)}</strong><br><br>
+      <span style="font-size:.82rem">Fix: click your avatar (top-right) → Settings → update your Groq API key.<br>
+      Get a free key at <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a></span>
+    </div>`;
+    return;
+  }
   window._clComp=company||name||'doc'; // safe global for onclick
   const clBase=`cl_${(company||name||'doc').replace(/[^a-z0-9]/gi,'_')}`;
   out.innerHTML=`
@@ -4118,7 +4368,13 @@ async function groq(prompt,maxTokens=1200){
       body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
     });
     const d=await r.json();
-    if(d.error) return `Error: ${d.error.message}`;
+    if(d.error){
+      // 401 = invalid key, show actionable message
+      const msg = d.error.code==='invalid_api_key'||r.status===401
+        ? 'Error: Invalid API Key — update it in Settings (avatar → Settings → Groq API Key)'
+        : `Error: ${d.error.message}`;
+      return msg;
+    }
     return d.choices?.[0]?.message?.content||'No response.';
   }catch(e){return `Error: ${e.message}`;}
 }
@@ -4144,6 +4400,7 @@ function persist(){
     localStorage.setItem('hiq_rkey',S.rkey);
     localStorage.setItem('hiq_email',S.email);
     localStorage.setItem('hiq_linkedin',S.linkedin||'');
+    localStorage.setItem('hiq_resumes',JSON.stringify(S.resumes||[]));
     localStorage.setItem('hiq_theme',S.theme);
     localStorage.setItem('hiq_apps',JSON.stringify(S.apps));
     localStorage.setItem('hiq_alerts',JSON.stringify(S.alerts));
@@ -4823,7 +5080,7 @@ function exportAllData(){
 
 function resetAllData(){
   if(!confirm('This will permanently delete all your HireIQ data — tracker, resume, alerts, and settings. This cannot be undone.\n\nAre you absolutely sure?')) return;
-  ['hiq_name','hiq_gkey','hiq_rkey','hiq_email','hiq_linkedin','hiq_theme','hiq_resume','hiq_apps','hiq_alerts','hiq_notifs','hiq_search_hist','hiq_tkview','hiq_fontsize','hiq_install_dismissed','hiq_reviewed'].forEach(k=>localStorage.removeItem(k));
+  ['hiq_name','hiq_gkey','hiq_rkey','hiq_email','hiq_linkedin','hiq_theme','hiq_resume','hiq_resumes','hiq_apps','hiq_alerts','hiq_notifs','hiq_search_hist','hiq_tkview','hiq_fontsize','hiq_install_dismissed','hiq_reviewed'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
