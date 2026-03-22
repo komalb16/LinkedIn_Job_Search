@@ -631,7 +631,7 @@ textarea.ta::placeholder{color:var(--text3);}
 
 /* ── Apply button tooltip (shows URL) ─────── */
 .apply-btn-wrap{position:relative;display:inline-block;}
-.apply-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:.7rem;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s;z-index:200;max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+.apply-tooltip{position:absolute;bottom:calc(100% + 6px);left:0;transform:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.69rem;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s;z-index:500;max-width:340px;overflow:hidden;text-overflow:ellipsis;box-shadow:var(--shadow);}
 .apply-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--border);}
 .apply-btn-wrap:hover .apply-tooltip{opacity:1;}
 
@@ -914,6 +914,9 @@ textarea.ta::placeholder{color:var(--text3);}
 
 /* ── LinkedIn badge on job cards ── */
 .li-badge{background:#0077B5;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;letter-spacing:.2px;flex-shrink:0;}
+.indeed-badge{background:#003A9B;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
+.glassdoor-badge{background:#0CAA41;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
+.zip-badge{background:#E3001B;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
 .easy-apply-badge{background:#00a0dc;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
 
 /* ── Wide-screen two-column search layout ── */
@@ -1073,7 +1076,7 @@ textarea.ta::placeholder{color:var(--text3);}
         <div class="ud-email" id="udEmail"></div>
       </div>
       <div class="ud-item" onclick="closeMod();openSettings()">⚙️ Settings</div>
-      <div class="ud-item" onclick="sw('analytics',document.querySelector('.tab:nth-child(7))'))">📊 Analytics</div>
+      <div class="ud-item" onclick="closeMod();const at=Array.from(document.querySelectorAll('.tab')).find(t=>t.textContent.includes('Analytics'));if(at)sw('analytics',at);">📊 Analytics</div>
       <div class="ud-item danger" onclick="logoutHireIQ()">🚪 Log out</div>
     </div>
   </div>
@@ -2344,9 +2347,18 @@ function setTheme(t,silent){
 // SETTINGS
 // ═══════════════════════════════════════════════
 function openSettings(){
-  // Populate font size selector with current value
   const fsEl = document.getElementById('s-fontsize');
   if(fsEl) fsEl.value = localStorage.getItem('hiq_fontsize')||'md';
+  // Populate key fields with saved values so test button works
+  const gkEl = document.getElementById('s-gkey');
+  const rkEl = document.getElementById('s-rkey');
+  if(gkEl && !gkEl.value && S.gkey) gkEl.value = S.gkey;
+  if(rkEl && !rkEl.value && S.rkey) rkEl.value = S.rkey;
+  // Show current connection status
+  const gStatus = document.getElementById('groqKeyStatus');
+  const rStatus = document.getElementById('rapidKeyStatus');
+  if(gStatus && S.gkey) gStatus.textContent = '(saved — click Test to verify)';
+  if(rStatus && S.rkey) rStatus.textContent = '(saved — click Test to verify)';
   openMod('sMod');
 }
 async function testGroqKey(){
@@ -2842,6 +2854,28 @@ function filterMock(title,kw,loc){
   return r.length ? r : JOBS.slice(0,8);
 }
 
+async function rescoreResults(){
+  if(!allJobs || allJobs.length===0 || !S.resume || !S.gkey) return;
+  const searchOut = document.getElementById('searchOut');
+  // Show subtle re-scoring indicator — don't replace the whole results
+  const indicator = document.createElement('div');
+  indicator.id = 'rescore-indicator';
+  indicator.style.cssText = 'font-size:.76rem;color:var(--text2);padding:.4rem 0;font-family:var(--font-d);animation:pulse 1s infinite';
+  indicator.textContent = '⚡ Re-scoring results with your resume…';
+  if(searchOut) searchOut.prepend(indicator);
+
+  try{
+    await scoreJobs(allJobs);
+    // Re-render with scores
+    renderJobs(allJobs);
+    toast('✅ Match scores updated with your resume');
+  } catch(e){
+    console.warn('rescoreResults failed:', e);
+  } finally {
+    document.getElementById('rescore-indicator')?.remove();
+  }
+}
+
 async function scoreJobs(jobs){
   try{
     const rows=jobs.map((j,i)=>`${i}. ${j.title} (${(j.skills||[]).join(', ')})`).join('\n');
@@ -2907,8 +2941,12 @@ function renderJobs(jobs){
     const sc=j.score?`<span class="match-p">${j.score}% match</span>`:'';
     const nw=j.isNew?`<span class="new-p">🆕 NEW</span>`:'';
     const safeUrl = j.url ? j.url.replace(/"/g,'&quot;') : '#';
-    const liBadge = j.isLinkedIn ? `<span class="li-badge">in</span>` : '';
-    const eaBadge = j.easyApply  ? `<span class="easy-apply-badge">Easy Apply</span>` : '';
+    const liBadge   = j.isLinkedIn  ? `<span class="li-badge">in</span>` : '';
+    const indBadge  = j.isIndeed    ? `<span class="indeed-badge">Indeed</span>` : '';
+    const gdBadge   = j.isGlassdoor ? `<span class="glassdoor-badge">Glassdoor</span>` : '';
+    const zipBadge  = j.isZip       ? `<span class="zip-badge">Zip</span>` : '';
+    const srcBadge  = liBadge||indBadge||gdBadge||zipBadge;
+    const eaBadge   = j.easyApply   ? `<span class="easy-apply-badge">Easy Apply</span>` : '';
     html+=`
     <div class="jcard" onclick="openJobReg(${ri})">
       <div class="jcard-top">
@@ -3295,6 +3333,10 @@ function saveResumeToLibrary(txt, name, makeActive){
   updateSidebarStats();
   renderResumeLibrary();
   toast(makeActive?`"${name}" saved and set as active ✅`:`"${name}" added to library ✅`);
+  // Re-score existing search results with the new resume
+  if(makeActive && allJobs && allJobs.length > 0 && S.gkey){
+    rescoreResults();
+  }
 }
 function setActiveResume(idx){
   const r=S.resumes[idx]; if(!r) return;
@@ -3305,6 +3347,10 @@ function setActiveResume(idx){
   try{ showRStats(r.text); }catch(e){}
   renderResumeLibrary();
   toast(`"${r.name}" set as active resume ✅`);
+  // Re-score existing results with newly activated resume
+  if(allJobs && allJobs.length > 0 && S.gkey){
+    rescoreResults();
+  }
 }
 function deleteResumeFromLibrary(idx){
   const r=S.resumes[idx]; if(!r) return;
@@ -5146,9 +5192,13 @@ function annotateLinkedInJobs(jobs){
   return jobs.map(j=>{
     const url = (j.url||'').toLowerCase();
     const src = (j.source||'').toLowerCase();
-    j.isLinkedIn  = url.includes('linkedin.com') || src.includes('linkedin');
-    j.easyApply   = url.includes('linkedin.com/jobs/easy-apply') ||
-                    (j.apply_options||[]).some(o=>(o.title||'').toLowerCase().includes('easy apply'));
+    const via = (j.via||j.publisher||'').toLowerCase();
+    j.isLinkedIn   = url.includes('linkedin.com') || src.includes('linkedin') || via.includes('linkedin');
+    j.isIndeed     = url.includes('indeed.com')   || src.includes('indeed')   || via.includes('indeed');
+    j.isGlassdoor  = url.includes('glassdoor')    || src.includes('glassdoor')|| via.includes('glassdoor');
+    j.isZip        = url.includes('ziprecruiter') || src.includes('zip')      || via.includes('zip');
+    j.easyApply    = url.includes('linkedin.com/jobs/easy-apply') ||
+                     (j.apply_options||[]).some(o=>(o.title||'').toLowerCase().includes('easy apply'));
     return j;
   });
 }
