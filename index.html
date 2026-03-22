@@ -631,7 +631,7 @@ textarea.ta::placeholder{color:var(--text3);}
 
 /* ── Apply button tooltip (shows URL) ─────── */
 .apply-btn-wrap{position:relative;display:inline-block;}
-.apply-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:.7rem;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s;z-index:200;max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+.apply-tooltip{position:absolute;bottom:calc(100% + 6px);left:0;transform:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.69rem;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s;z-index:500;max-width:340px;overflow:hidden;text-overflow:ellipsis;box-shadow:var(--shadow);}
 .apply-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--border);}
 .apply-btn-wrap:hover .apply-tooltip{opacity:1;}
 
@@ -914,6 +914,9 @@ textarea.ta::placeholder{color:var(--text3);}
 
 /* ── LinkedIn badge on job cards ── */
 .li-badge{background:#0077B5;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;letter-spacing:.2px;flex-shrink:0;}
+.indeed-badge{background:#003A9B;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
+.glassdoor-badge{background:#0CAA41;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
+.zip-badge{background:#E3001B;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
 .easy-apply-badge{background:#00a0dc;color:#fff;font-size:.63rem;padding:2px 6px;border-radius:3px;font-family:var(--font-d);font-weight:700;}
 
 /* ── Wide-screen two-column search layout ── */
@@ -1072,8 +1075,8 @@ textarea.ta::placeholder{color:var(--text3);}
         <div class="ud-name" id="udName">Guest</div>
         <div class="ud-email" id="udEmail"></div>
       </div>
-      <div class="ud-item" onclick="closeMod();openSettings()">⚙️ Settings</div>
-      <div class="ud-item" onclick="sw('analytics',document.querySelector('.tab:nth-child(7))'))">📊 Analytics</div>
+      <div class="ud-item" onclick="document.getElementById('userDropdown').classList.remove('open');openSettings()">⚙️ Settings</div>
+      <div class="ud-item" onclick="document.getElementById('userDropdown').classList.remove('open');const at=Array.from(document.querySelectorAll('.tab')).find(t=>t.textContent.includes('Analytics'));if(at)sw('analytics',at);">📊 Analytics</div>
       <div class="ud-item danger" onclick="logoutHireIQ()">🚪 Log out</div>
     </div>
   </div>
@@ -2038,7 +2041,7 @@ textarea.ta::placeholder{color:var(--text3);}
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
-let S = {
+var S = S || {
   name:     localStorage.getItem('hiq_name')||'',
   gkey:     localStorage.getItem('hiq_gkey')||'',
   rkey:     localStorage.getItem('hiq_rkey')||'',
@@ -2051,9 +2054,9 @@ let S = {
   alerts:   JSON.parse(localStorage.getItem('hiq_alerts')||'[]'),
   notifs:   JSON.parse(localStorage.getItem('hiq_notifs')||'[]'),
 };
-let allJobs=[], curJob=null, curCat='all', curDiff='all';
-let lastSearch={title:'',loc:'',kw:''};
-let swReg=null, alertTimers={};
+var allJobs=[], curJob=null, curCat='all', curDiff='all';
+var lastSearch={title:'',loc:'',kw:''};
+var swReg=null, alertTimers={};
 
 // ═══════════════════════════════════════════════
 // BOOT
@@ -2344,9 +2347,18 @@ function setTheme(t,silent){
 // SETTINGS
 // ═══════════════════════════════════════════════
 function openSettings(){
-  // Populate font size selector with current value
   const fsEl = document.getElementById('s-fontsize');
   if(fsEl) fsEl.value = localStorage.getItem('hiq_fontsize')||'md';
+  // Populate key fields with saved values so test button works
+  const gkEl = document.getElementById('s-gkey');
+  const rkEl = document.getElementById('s-rkey');
+  if(gkEl && !gkEl.value && S.gkey) gkEl.value = S.gkey;
+  if(rkEl && !rkEl.value && S.rkey) rkEl.value = S.rkey;
+  // Show current connection status
+  const gStatus = document.getElementById('groqKeyStatus');
+  const rStatus = document.getElementById('rapidKeyStatus');
+  if(gStatus && S.gkey) gStatus.textContent = '(saved — click Test to verify)';
+  if(rStatus && S.rkey) rStatus.textContent = '(saved — click Test to verify)';
   openMod('sMod');
 }
 async function testGroqKey(){
@@ -2842,6 +2854,28 @@ function filterMock(title,kw,loc){
   return r.length ? r : JOBS.slice(0,8);
 }
 
+async function rescoreResults(){
+  if(!allJobs || allJobs.length===0 || !S.resume || !S.gkey) return;
+  const searchOut = document.getElementById('searchOut');
+  // Show subtle re-scoring indicator — don't replace the whole results
+  const indicator = document.createElement('div');
+  indicator.id = 'rescore-indicator';
+  indicator.style.cssText = 'font-size:.76rem;color:var(--text2);padding:.4rem 0;font-family:var(--font-d);animation:pulse 1s infinite';
+  indicator.textContent = '⚡ Re-scoring results with your resume…';
+  if(searchOut) searchOut.prepend(indicator);
+
+  try{
+    await scoreJobs(allJobs);
+    // Re-render with scores
+    renderJobs(allJobs);
+    toast('✅ Match scores updated with your resume');
+  } catch(e){
+    console.warn('rescoreResults failed:', e);
+  } finally {
+    document.getElementById('rescore-indicator')?.remove();
+  }
+}
+
 async function scoreJobs(jobs){
   try{
     const rows=jobs.map((j,i)=>`${i}. ${j.title} (${(j.skills||[]).join(', ')})`).join('\n');
@@ -2907,8 +2941,12 @@ function renderJobs(jobs){
     const sc=j.score?`<span class="match-p">${j.score}% match</span>`:'';
     const nw=j.isNew?`<span class="new-p">🆕 NEW</span>`:'';
     const safeUrl = j.url ? j.url.replace(/"/g,'&quot;') : '#';
-    const liBadge = j.isLinkedIn ? `<span class="li-badge">in</span>` : '';
-    const eaBadge = j.easyApply  ? `<span class="easy-apply-badge">Easy Apply</span>` : '';
+    const liBadge   = j.isLinkedIn  ? `<span class="li-badge">in</span>` : '';
+    const indBadge  = j.isIndeed    ? `<span class="indeed-badge">Indeed</span>` : '';
+    const gdBadge   = j.isGlassdoor ? `<span class="glassdoor-badge">Glassdoor</span>` : '';
+    const zipBadge  = j.isZip       ? `<span class="zip-badge">Zip</span>` : '';
+    const srcBadge  = liBadge||indBadge||gdBadge||zipBadge;
+    const eaBadge   = j.easyApply   ? `<span class="easy-apply-badge">Easy Apply</span>` : '';
     html+=`
     <div class="jcard" onclick="openJobReg(${ri})">
       <div class="jcard-top">
@@ -3080,7 +3118,7 @@ Rewrite to:
 4. Remove irrelevant sections
 5. Keep it clean and professional
 
-Output only the complete tailored resume:`,1800);
+Output the complete tailored resume now:`, 4000);
   if(out) out.innerHTML=`
     <div class="ai-box" id="tailor_src">${res}</div>
     <div class="dl-row">
@@ -3095,12 +3133,10 @@ Output only the complete tailored resume:`,1800);
 }
 
 function useAsTailor(){
-  const txt=document.getElementById('tailor_src')?.textContent||document.querySelector('#mAI-tailor .ai-box')?.textContent;
-  if(!txt) return;
-  S.resume=txt; localStorage.setItem('hiq_resume',txt);
-  document.getElementById('resumeTA').value=txt;
-  const pv=document.getElementById('resumePrev'); pv.textContent=txt; pv.classList.remove('dim');
-  showRStats(txt); toast('Saved as active resume ✅');
+  const txt=document.getElementById('tailor_src')?.textContent
+    || document.querySelector('#mAI-tailor .ai-box')?.textContent;
+  if(!txt){ toast('No tailored resume found — generate one first'); return; }
+  _doSaveResume(txt, 'AI Tailored Resume');
 }
 
 async function doPrep(){
@@ -3295,6 +3331,10 @@ function saveResumeToLibrary(txt, name, makeActive){
   updateSidebarStats();
   renderResumeLibrary();
   toast(makeActive?`"${name}" saved and set as active ✅`:`"${name}" added to library ✅`);
+  // Re-score existing search results with the new resume
+  if(makeActive && allJobs && allJobs.length > 0 && S.gkey){
+    rescoreResults();
+  }
 }
 function setActiveResume(idx){
   const r=S.resumes[idx]; if(!r) return;
@@ -3305,6 +3345,10 @@ function setActiveResume(idx){
   try{ showRStats(r.text); }catch(e){}
   renderResumeLibrary();
   toast(`"${r.name}" set as active resume ✅`);
+  // Re-score existing results with newly activated resume
+  if(allJobs && allJobs.length > 0 && S.gkey){
+    rescoreResults();
+  }
 }
 function deleteResumeFromLibrary(idx){
   const r=S.resumes[idx]; if(!r) return;
@@ -3390,8 +3434,29 @@ async function buildResume(){
   const prompt=mode==='build'
     ?`Create a professional, ATS-optimized resume for:\nNAME: ${name}\nTARGET ROLE: ${role||'Software Engineer'}\nSKILLS & BACKGROUND: ${skills}\n\nJOB DESCRIPTION:\n${jd}\n\nWrite a complete resume with:\n- Professional Summary (keyword-rich, 3 sentences)\n- Work Experience (3 positions with metric-driven bullets)\n- Skills (match JD keywords)\n- Education\n- Certifications/Projects if relevant\n\nOutput only the resume:`
     :(!S.resume?'No resume saved. Please save your existing resume first.':
-    `Tailor this resume for the job. Maximize ATS match.\n\nRESUME:\n${S.resume}\n\nJOB DESCRIPTION:\n${jd}\n\nRewrite completely — real experience, optimized every word. Output only the tailored resume:`);
-  const res=await groq(prompt,2000);
+    `You are an expert resume writer and ATS optimization specialist.
+
+TASK: Tailor the candidate's existing resume for the specific job below.
+Preserve ALL work experience, education, certifications, and skills.
+Do NOT shorten or omit any job role. Do NOT invent experience.
+
+INSTRUCTIONS:
+- Rewrite the Professional Summary to directly target this role (3-4 sentences)
+- For EACH work experience entry: keep all bullet points, rephrase to use keywords from the JD naturally
+- Add missing keywords from the JD into relevant existing bullet points where truthful
+- Reorder skills section to put the most relevant skills first
+- Keep all dates, company names, titles, and locations exactly as-is
+- Output the COMPLETE resume — every job, every bullet point, nothing omitted
+- Format: plain text, section headers in CAPS, bullet points with •
+
+CANDIDATE RESUME (preserve everything):
+${S.resume}
+
+JOB DESCRIPTION TO TARGET:
+${jd}
+
+Output the complete tailored resume now:`);
+  const res=await groq(prompt, 4000);
   const base=`resume_${(name||'doc').replace(/[^a-z0-9]/gi,'_')}`;
   document.getElementById('builtOut').innerHTML=`
     <div class="ai-box" id="${base}_src">${res}</div>
@@ -3406,12 +3471,25 @@ async function buildResume(){
     <button class="btn btn-o" style="margin-top:.6rem;font-size:.76rem" onclick="runAudit('${base}_src','audit_${base}')">🔍 Run ATS Compliance Audit</button>
     <div id="audit_${base}"></div>`;
 }
+function _doSaveResume(txt, label){
+  if(!txt || !txt.trim()){ toast('No content to save'); return; }
+  txt = txt.trim();
+  // Save to library system
+  if(!S.resumes) S.resumes=[];
+  const name = label || ('AI Resume ' + new Date().toLocaleDateString());
+  saveResumeToLibrary(txt, name, true);
+  // Also update the textarea
+  const ta = document.getElementById('resumeTA');
+  if(ta) ta.value = txt;
+  // Update the resume card display
+  try{ showRStats(txt); } catch(e){}
+  // Rescore search results if any
+  if(allJobs && allJobs.length > 0 && S.gkey) setTimeout(rescoreResults, 500);
+}
 function useBuiltById(srcId){
-  const t=document.getElementById(srcId)?.textContent; if(!t) return;
-  S.resume=t; localStorage.setItem('hiq_resume',t);
-  document.getElementById('resumeTA').value=t;
-  const pv=document.getElementById('resumePrev'); pv.textContent=t; pv.classList.remove('dim');
-  showRStats(t); toast('Saved as active resume ✅');
+  const t=document.getElementById(srcId)?.textContent;
+  if(!t){ toast('Could not find resume text'); return; }
+  _doSaveResume(t, 'AI Tailored Resume');
 }
 function useBuilt(){ useBuiltById('builtOut'); }
 
@@ -3782,7 +3860,7 @@ function renderList(){
 }
 
 // Patch sw() to init touch drag when switching to tracker
-const _origSw=window.sw;
+var _origSw=window.sw;
 window.sw=function(name,el){
   _origSw(name,el);
   if(name==='tracker'){ setTimeout(()=>{ renderTracker(); initTouchDrag(); },60); }
@@ -4248,21 +4326,24 @@ Rules:
 - Integrate keywords naturally into existing experience bullets
 - Do not fabricate experience you don't have — rephrase what's there
 - Keep all real content intact
-- Output only the complete updated resume:`,1800);
+- Preserve ALL work experience — every job, every bullet point
+- Output the complete updated resume (nothing omitted):`, 4000);
   btn.textContent='✨ Fix gaps with Groq AI'; btn.disabled=false;
   const fixDiv=document.createElement('div');
   fixDiv.style.marginTop='1rem';
-  fixDiv.innerHTML=`<div style="font-family:var(--font-d);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:.5rem">AI-Fixed Resume</div><div class="ai-box">${res}</div><div style="display:flex;gap:.5rem;margin-top:.7rem;flex-wrap:wrap"><button class="btn btn-tl btn-sm" onclick="copyTxt(this.closest('div').previousElementSibling.textContent)">Copy</button><button class="btn btn-p btn-sm" onclick="saveFixedResume(this)">Use as My Resume</button></div>`;
+  const fixKey='atsfix_'+Date.now();
+  window._atsFixCache=window._atsFixCache||{};
+  window._atsFixCache[fixKey]=res;
+  fixDiv.innerHTML=`<div style="font-family:var(--font-d);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:.5rem">✅ AI-Fixed Resume</div><div class="ai-box" id="${fixKey}">${escHtml(res)}</div><div style="display:flex;gap:.5rem;margin-top:.7rem;flex-wrap:wrap"><button class="btn btn-tl btn-sm" onclick="copyTxt(window._atsFixCache['${fixKey}'])">📋 Copy</button><button class="btn btn-p btn-sm" onclick="_doSaveResume(window._atsFixCache['${fixKey}'],'ATS-Fixed Resume')">✅ Use as My Resume</button></div>`;
   document.getElementById(outId).appendChild(fixDiv);
 }
 
 function saveFixedResume(btn){
-  const txt=btn.closest('div').previousElementSibling?.textContent;
-  if(!txt) return;
-  S.resume=txt; localStorage.setItem('hiq_resume',txt);
-  document.getElementById('resumeTA').value=txt;
-  const pv=document.getElementById('resumePrev'); pv.textContent=txt; pv.classList.remove('dim');
-  showRStats(txt); toast('Saved as active resume ✅');
+  // Find the ai-box sibling that contains the fixed resume text
+  const box = btn.closest('[style*="margin-top"]')?.querySelector('.ai-box');
+  const txt = box?.textContent || btn.closest('div')?.previousElementSibling?.textContent;
+  if(!txt){ toast('Could not read fixed resume — try Copy instead'); return; }
+  _doSaveResume(txt, 'ATS-Fixed Resume');
 }
 
 function prefillATSResume(){
@@ -4273,7 +4354,7 @@ function prefillATSResume(){
 // ═══════════════════════════════════════════════
 // COVER LETTER GENERATOR
 // ═══════════════════════════════════════════════
-let selectedTone='Professional';
+var selectedTone='Professional';
 
 function setTone(el, tone, rowId){
   selectedTone=tone;
@@ -4994,7 +5075,7 @@ function renderAnalytics(){
 }
 
 // Hook sw() to render analytics on tab switch
-const _origSwAnalytics = window.sw;
+var _origSwAnalytics = window.sw;
 window.sw = function(name, el){
   _origSwAnalytics(name, el);
   if(name==='analytics') renderAnalytics();
@@ -5005,7 +5086,7 @@ window.sw = function(name, el){
 // SEARCH HISTORY
 // ═══════════════════════════════════════════════
 const SEARCH_HIST_KEY = 'hiq_search_hist';
-let searchHist = JSON.parse(localStorage.getItem(SEARCH_HIST_KEY)||'[]');
+var searchHist = JSON.parse(localStorage.getItem(SEARCH_HIST_KEY)||'[]');
 
 function pushSearchHist(title, loc, kw){
   if(!title && !loc && !kw) return;
@@ -5146,9 +5227,13 @@ function annotateLinkedInJobs(jobs){
   return jobs.map(j=>{
     const url = (j.url||'').toLowerCase();
     const src = (j.source||'').toLowerCase();
-    j.isLinkedIn  = url.includes('linkedin.com') || src.includes('linkedin');
-    j.easyApply   = url.includes('linkedin.com/jobs/easy-apply') ||
-                    (j.apply_options||[]).some(o=>(o.title||'').toLowerCase().includes('easy apply'));
+    const via = (j.via||j.publisher||'').toLowerCase();
+    j.isLinkedIn   = url.includes('linkedin.com') || src.includes('linkedin') || via.includes('linkedin');
+    j.isIndeed     = url.includes('indeed.com')   || src.includes('indeed')   || via.includes('indeed');
+    j.isGlassdoor  = url.includes('glassdoor')    || src.includes('glassdoor')|| via.includes('glassdoor');
+    j.isZip        = url.includes('ziprecruiter') || src.includes('zip')      || via.includes('zip');
+    j.easyApply    = url.includes('linkedin.com/jobs/easy-apply') ||
+                     (j.apply_options||[]).some(o=>(o.title||'').toLowerCase().includes('easy apply'));
     return j;
   });
 }
@@ -6222,13 +6307,21 @@ async function groqChat(messages, maxTokens=600){
 // ═══════════════════════════════════════════════
 async function loadDocxLib(){
   if(window.docx) return window.docx;
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://unpkg.com/docx@9.5.3/build/index.js';
-    s.onload=()=>res(window.docx);
-    s.onerror=()=>rej(new Error('Could not load docx.js — check internet connection'));
-    document.head.appendChild(s);
-  });
+  const DOCX_URLS=[
+    'https://unpkg.com/docx@9.5.3/build/index.js',
+    'https://cdn.jsdelivr.net/npm/docx@9.5.3/build/index.js',
+  ];
+  for(const url of DOCX_URLS){
+    try{
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src=url; s.onload=res; s.onerror=rej;
+        document.head.appendChild(s);
+      });
+      if(window.docx) return window.docx;
+    }catch(e){ console.warn('docx CDN failed:',url); }
+  }
+  throw new Error('Could not load docx.js — check internet connection');
 }
 
 async function buildAndDownloadDocx(text, name, company, mode, filename){
@@ -6259,18 +6352,38 @@ async function buildAndDownloadDocx(text, name, company, mode, filename){
 
     if(mode==='resume'){
       const lines=clean.split('\n');
-      // Name — first non-empty line or provided name
-      const displayName = name || lines.find(l=>l.trim())||'';
+      // Name — use S.name (actual name) not first line of AI output which may be role title
+      const displayName = S.name || name || lines.find(l=>l.trim())||'';
       children.push(new Paragraph({
         children:[txt(displayName,{bold:true,size:40,color:'1F3864'})],
-        spacing:{before:0,after:60},alignment:AlignmentType.CENTER
+        spacing:{before:0,after:40},alignment:AlignmentType.CENTER
       }));
-      // Contact block — lines before first section heading
-      let bodyStart=1;
-      for(let i=1;i<lines.length;i++){
+      // Inject real contact info from S state (guaranteed accurate)
+      const contactParts=[];
+      if(S.email) contactParts.push(S.email);
+      if(S.linkedin) contactParts.push(S.linkedin);
+      // Try to extract phone from resume text (common pattern)
+      const phoneMatch=clean.match(/\+?[0-9][\d\s\-().]{7,15}/);
+      if(phoneMatch) contactParts.push(phoneMatch[0].trim());
+      if(contactParts.length>0){
+        children.push(new Paragraph({
+          children:contactParts.map((c,i)=>[
+            txt(c,{size:18,color:'444444'}),
+            i<contactParts.length-1?txt('  |  ',{size:18,color:'AAAAAA'}):null
+          ]).flat().filter(Boolean),
+          spacing:{before:0,after:60},alignment:AlignmentType.CENTER
+        }));
+      }
+      // Skip lines at top that look like role titles (not contact info)
+      // Find where real body starts — skip AI-generated name/role header lines
+      let bodyStart=0;
+      for(let i=0;i<lines.length;i++){
         const l=lines[i].trim();
         if(SREX.test(l)){bodyStart=i;break;}
-        if(l) children.push(para(l,{size:18,color:'555555',after:28,align:AlignmentType.CENTER}));
+        // Skip lines that are just the name or a job title (short, no special chars)
+        // but keep contact-looking lines (has @, +, linkedin, location)
+        if(l && !/[@+]|linkedin|http|,\s*[A-Z]{2}/.test(l.toLowerCase()) && l.length<60 && i<4) continue;
+        if(l) bodyStart=i; break;
       }
       // Body
       for(let i=bodyStart;i<lines.length;i++){
@@ -6298,20 +6411,23 @@ async function buildAndDownloadDocx(text, name, company, mode, filename){
         }
       }
     } else {
-      // Cover letter
+      // Cover letter — date top, letter body, signature with contact at bottom
       const lines=clean.split('\n');
-      children.push(para(name||'',{bold:true,size:26,color:'1F3864',after:60}));
       const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
       children.push(para(today,{size:19,color:'666666',after:200}));
+      let passedSignature=false;
       let emptyCount=0;
       for(const line of lines){
         const l=line.trim();
+        // Skip if line is just the candidate name (AI sometimes puts it at top)
+        if(!passedSignature && l && (l===name || l==='[Your Name]')) continue;
         if(!l){emptyCount++;if(emptyCount===1)children.push(new Paragraph({spacing:{before:0,after:120}}));continue;}
         emptyCount=0;
         if(/^dear /i.test(l)){
           children.push(new Paragraph({children:[txt(l,{bold:true,size:22})],spacing:{before:0,after:160}}));
-        } else if(/^(sincerely|best regards|regards|yours truly|respectfully)/i.test(l)){
-          children.push(new Paragraph({spacing:{before:160,after:40}}));
+        } else if(/^(sincerely|best regards|regards|yours truly|respectfully|warm regards)/i.test(l)){
+          passedSignature=true;
+          children.push(new Paragraph({spacing:{before:200,after:40}}));
           children.push(para(l,{size:22,after:80}));
         } else {
           children.push(new Paragraph({
@@ -6320,6 +6436,13 @@ async function buildAndDownloadDocx(text, name, company, mode, filename){
             alignment:AlignmentType.JUSTIFIED
           }));
         }
+      }
+      // Add contact info block at the very end
+      if(name||S.email||S.linkedin){
+        children.push(new Paragraph({spacing:{before:40,after:20}}));
+        if(name) children.push(para(name,{bold:true,size:22,color:'1F3864',after:20}));
+        if(S.email) children.push(para(S.email,{size:19,color:'555555',after:12}));
+        if(S.linkedin) children.push(para(S.linkedin,{size:19,color:'2E75B6',after:12}));
       }
     }
 

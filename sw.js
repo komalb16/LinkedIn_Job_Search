@@ -1,6 +1,6 @@
 // HireIQ Service Worker
 // Handles: offline caching, push notifications, background alert messages
-const CACHE = 'hireiq-v1';
+const CACHE = 'hireiq-v7';
 const ASSETS = ['/'];
 
 // Install — cache the app shell
