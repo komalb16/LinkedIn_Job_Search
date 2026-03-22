@@ -2038,6 +2038,21 @@ textarea.ta::placeholder{color:var(--text3);}
 <div id="toast"></div>
 
 <script>
+// ── Immediately clean up any stale service workers ────────────────────────
+// Runs before anything else so old SWs can't serve cached stale files
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => {
+      const url = reg.active?.scriptURL || reg.installing?.scriptURL || '';
+      // Unregister blob: SWs (old versions) and anything not /sw.js
+      if(url.startsWith('blob:') || (!url.endsWith('/sw.js'))){
+        reg.unregister().then(ok => {
+          if(ok) console.log('[HireIQ] Removed stale SW:', url.slice(0,60));
+        });
+      }
+    });
+  });
+}
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
@@ -2055,6 +2070,7 @@ var S = S || {
   notifs:   JSON.parse(localStorage.getItem('hiq_notifs')||'[]'),
 };
 var allJobs=[], curJob=null, curCat='all', curDiff='all';
+var curTypeFilter='all', curWorkFilter='all';
 var lastSearch={title:'',loc:'',kw:''};
 var swReg=null, alertTimers={};
 
@@ -2422,12 +2438,35 @@ function saveSettings(){
 async function registerSW(){
   if(!('serviceWorker' in navigator)) return;
   try {
-    // Register real same-origin sw.js — works on Vercel and all HTTPS hosts
+    // ── Clean up ALL old registrations first ──────────────────────────
+    const all = await navigator.serviceWorker.getRegistrations();
+    for(const reg of all){
+      // Keep only the current /sw.js — unregister everything else
+      // (blob: URLs from old versions, wrong scope, duplicate /sw.js)
+      const scriptURL = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || '';
+      const isCurrentSW = scriptURL.endsWith('/sw.js') && reg.scope === location.origin + '/';
+      const alreadyMatches = reg === swReg;
+      if(!isCurrentSW || alreadyMatches){
+        await reg.unregister();
+        console.log('[HireIQ] Cleaned up old SW:', scriptURL || 'unknown');
+      }
+    }
+    // ── Register the single canonical SW ─────────────────────────────
     swReg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    // Tell the new SW to activate immediately (skip waiting)
+    if(swReg.waiting) swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    swReg.addEventListener('updatefound', () => {
+      const newSW = swReg.installing;
+      if(newSW) newSW.addEventListener('statechange', () => {
+        if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+          newSW.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    });
     navigator.serviceWorker.addEventListener('message', e => {
       if(e.data?.type === 'RUN_CHECK') runAlertCheck(e.data.alertId);
     });
-    console.log('[HireIQ] SW registered ✅');
+    console.log('[HireIQ] SW registered ✅ — active SWs:', (await navigator.serviceWorker.getRegistrations()).length);
   } catch(err) {
     console.info('[HireIQ] SW not available — in-tab alerts active');
     swReg = null;
@@ -2764,6 +2803,10 @@ const JOBS=[
 // SEARCH
 // ═══════════════════════════════════════════════
 async function doSearch(){
+  // Reset filters on new search
+  curTypeFilter='all'; curWorkFilter='all';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('.chip[onclick*="all"]').forEach(c=>c.classList.add('on'));
   const title=document.getElementById('sTitle').value.trim();
   const loc  =document.getElementById('sLoc').value.trim();
   const kw   =document.getElementById('sKw').value.trim();
@@ -4473,7 +4516,45 @@ function openMod(id){document.getElementById(id).classList.add('open');}
 function closeMod(id){document.getElementById(id).classList.remove('open');}
 document.getElementById('jMod').addEventListener('click',e=>{if(e.target===document.getElementById('jMod'))closeMod('jMod');});
 document.getElementById('sMod').addEventListener('click',e=>{if(e.target===document.getElementById('sMod'))closeMod('sMod');});
-function fc(el,type,val){document.querySelectorAll('.chip').forEach(c=>{if(c.getAttribute('onclick')?.includes(`'${type}'`))c.classList.remove('on');});el.classList.add('on');}
+function fc(el,type,val){
+  // Update chip active state
+  document.querySelectorAll('.chip').forEach(c=>{
+    if(c.getAttribute('onclick')?.includes(`'${type}'`)) c.classList.remove('on');
+  });
+  el.classList.add('on');
+  // Store filter state
+  if(type==='t') curTypeFilter=val;
+  if(type==='w') curWorkFilter=val;
+  // Re-render with filter applied
+  applyJobFilters();
+}
+function applyJobFilters(){
+  if(!allJobs || allJobs.length===0) return;
+  let filtered = allJobs.filter(j=>{
+    // Type filter
+    const jType = (j.type||'').toLowerCase();
+    const typeOk = curTypeFilter==='all'
+      || (curTypeFilter==='fulltime'  && (jType.includes('full') || jType==='fulltime'))
+      || (curTypeFilter==='parttime'  && (jType.includes('part') || jType==='parttime'))
+      || (curTypeFilter==='contract'  && (jType.includes('contract') || jType.includes('contractor') || jType==='contract'));
+    // Work filter
+    const jWork = (j.work||'').toLowerCase();
+    const workOk = curWorkFilter==='all'
+      || (curWorkFilter==='remote'  && jWork==='remote')
+      || (curWorkFilter==='hybrid'  && jWork==='hybrid')
+      || (curWorkFilter==='onsite'  && (jWork==='on-site' || jWork==='onsite' || jWork==='on site'));
+    return typeOk && workOk;
+  });
+  if(filtered.length===0){
+    document.getElementById('searchOut').innerHTML=`<div class="empty-state">
+      <div class="es-icon">🔍</div>
+      <div class="es-title">No jobs match this filter</div>
+      <div class="es-desc">Try a different combination — most jobs are listed as Full-time or On-site.</div>
+    </div>`;
+    return;
+  }
+  renderJobs(filtered);
+}
 function persist(){
   try{
     localStorage.setItem('hiq_name',S.name);
